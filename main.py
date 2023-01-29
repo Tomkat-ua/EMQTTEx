@@ -15,7 +15,7 @@ from os import environ as environ
 print(appname + " ver. "+appver)
 tab='  |'
 
-env ='dev' #prod
+env ='prod' #prod
 
 if env == 'prod':
     server_port =int(environ.get('SERVER_PORT'))
