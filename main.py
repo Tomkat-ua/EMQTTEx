@@ -1,5 +1,5 @@
 # python3.6
-#### Tasmota MQTT extractor
+#### ESPHome MQTT extractor
 appver = "1.0.0"
 appname = "EspHome MQTT extractor"
 appshortname = "EMQTTEx"
@@ -16,14 +16,14 @@ print(appname + " ver. "+appver)
 # print('test_env_var:'+ str(test_env_var))
 tab='  |'
 
-env ='dev' #prod
+env ='prod' #prod
 
 if env == 'prod':
     server_port =int(environ.get('SERVER_PORT'))
     get_delay = int(environ.get('GET_DELAY'))
     broker = environ.get('BROKER_IP')
     port = int(environ.get('BROKER_PORT'))
-    topic = environ.get('TOPIC')
+    topic_pattern = environ.get('TOPIC')
     username = environ.get('USERNAME')
     password = environ.get('PASSWORD')
 else:
