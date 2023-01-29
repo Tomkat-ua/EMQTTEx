@@ -1,6 +1,6 @@
 # python3.6
-#### ESPHome MQTT extractor
-appver = "1.0.0"
+#### Tasmota MQTT extractor
+appver = "1.2.1"
 appname = "EspHome MQTT extractor"
 appshortname = "EMQTTEx"
 
@@ -13,7 +13,6 @@ from datetime import datetime
 from os import environ as environ
 
 print(appname + " ver. "+appver)
-# print('test_env_var:'+ str(test_env_var))
 tab='  |'
 
 env ='prod' #prod
@@ -31,17 +30,14 @@ else:
     get_delay = 10
     broker = 'ha.tomkat.cc'
     port = 1883
-    topic_pattern = "esphome/meteo1/sensor/#"
-    # topic_pattern = "tele/meteo1/sensor/meteo1_bme280-pressure/state"
+    topic_pattern = "esphome/+/sensor/#"
     username = 'mqtt'
     password = 'mqtt001'
 
 # generate client ID with pub prefix randomly
 client_id = f'python-mqtt-{random.randint(0, 100)}'
 
-# metric_name=topic.replace('/','_')
-# MQTT_VALUE = Gauge( topic_pattern.replace('/','_'), 'topic', ['topic','key','value','type'])
-MQTT_VALUE = Gauge('esphome_sensor_state', 'topic', ['topic','value'])
+MQTT_VALUE = Gauge('esphome_sensor_state', 'topic', ['device_type','device_name','sensor_type','sensor_name','data'])
 APP_INFO = Gauge('app_info', 'Return app info',['appname','appshortname','version'])
 APP_INFO.labels(appname,appshortname,appver).set(1)
 
@@ -62,22 +58,23 @@ def connect_mqtt() -> mqtt_client:
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
-        topic_name = msg.topic
-        topic_name = topic_name.replace("/","_")
-        topic_name = topic_name.replace("-", "_")
         value = msg.payload.decode()
-        set_metrica(topic_name,value)
+        topic_name = msg.topic
+        topic_name = topic_name.replace("-", "_")
+        topic_data = topic_name.split("/")
+        # topic_name = topic_name.replace("/","_")
+        set_metrica(topic_data[0],topic_data[1],topic_data[2],topic_data[3],topic_data[4],value)
 
     client.subscribe(topic_pattern)
     client.on_message = on_message
 
-def set_metrica(k,v):
+def set_metrica(p0,p1,p2,p3,p4,value):
     try:
-        v = float(v)
-        MQTT_VALUE.labels(k, 0).set(v)
+        value = float(value)
+        MQTT_VALUE.labels(p0,p1,p2,p3,p4).set(value)
     except  ValueError as e:
         print(e)
-        MQTT_VALUE.labels(k, v).set(1)
+        MQTT_VALUE.labels(p0,p1,p2,p3,value).set(0)
 
 def run():
     client = connect_mqtt()
