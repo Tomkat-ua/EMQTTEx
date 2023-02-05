@@ -1,6 +1,6 @@
 # python3.6
 #### Tasmota MQTT extractor
-appver = "1.2.1"
+appver = "1.3.1"
 appname = "EspHome MQTT extractor"
 appshortname = "EMQTTEx"
 
@@ -9,13 +9,13 @@ import random
 from paho.mqtt import client as mqtt_client
 from prometheus_client import start_http_server, Gauge
 from time import sleep as sleep
-from datetime import datetime
+from datetime import date
 from os import environ as environ
 
 print(appname + " ver. "+appver)
 tab='  |'
 
-env ='prod' #prod
+env ='dev' #prod
 
 if env == 'prod':
     server_port =int(environ.get('SERVER_PORT'))
@@ -54,10 +54,18 @@ def connect_mqtt() -> mqtt_client:
     client.connect(broker, port)
     return client
 
+def logformer(topic,message,e):
+    today = date.today()
+    now = today.strftime("%d/%m/%Y")
+    if e == 0:
+        print(now +  " : Received " + message + " from " + topic + " topic")
+    else:
+        print(now + " : Text value in topic : " + topic + " -- "+ message)
 
 def subscribe(client: mqtt_client):
     def on_message(client, userdata, msg):
-        print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+        logformer(msg.topic,msg.payload.decode(),0)
+        # print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
         value = msg.payload.decode()
         topic_name = msg.topic
         topic_name = topic_name.replace("-", "_")
@@ -73,7 +81,8 @@ def set_metrica(p0,p1,p2,p3,p4,value):
         value = float(value)
         MQTT_VALUE.labels(p0,p1,p2,p3,p4).set(value)
     except  ValueError as e:
-        print(e)
+        logformer(p0+'/'+p1+'/'+p2+'/'+p3+'/'+p4,value,1)
+        # print(e)
         MQTT_VALUE.labels(p0,p1,p2,p3,value).set(0)
 
 def run():
